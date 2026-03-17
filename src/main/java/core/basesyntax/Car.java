@@ -13,11 +13,20 @@ public final class Car {
     public Car(int year, String color, List<Wheel> wheels, Engine engine) {
         this.year = year;
         this.color = color;
-        this.wheels = new ArrayList<>();
+        this.engine = engine == null ? null : engine.clone();
+        this.wheels = wheels != null ? cloneWheels(wheels) : throwNpeForWheels();
+    }
+
+    private List<Wheel> cloneWheels(List<Wheel> wheels) {
+        List<Wheel> copy = new ArrayList<>();
         for (Wheel wheel : wheels) {
-            this.wheels.add(wheel.clone());
+            copy.add(wheel != null ? wheel.clone() : null);
         }
-        this.engine = engine.clone();
+        return copy;
+    }
+
+    private List<Wheel> throwNpeForWheels() {
+        throw new NullPointerException("Wheels не можуть бути null");
     }
 
     public int getYear() {
@@ -28,31 +37,41 @@ public final class Car {
         return color;
     }
 
+    public Engine getEngine() {
+        return engine == null ? null : engine.clone();
+    }
+
     public List<Wheel> getWheels() {
         List<Wheel> copy = new ArrayList<>();
-
         for (Wheel wheel : wheels) {
             copy.add(wheel.clone());
         }
         return copy;
     }
 
-    public Engine getEngine() {
-        return engine.clone();
-    }
-
-    public Car changeEngine(Engine engine) {
-        return new Car(this.year, this.color, this.wheels, engine);
+    public Car changeEngine(Engine newEngine) {
+        return new Car(
+                year,
+                color,
+                wheels,
+                Objects.requireNonNull(newEngine, "Engine не може бути null")
+        );
     }
 
     public Car changeColor(String newColor) {
-        return new Car(this.year, newColor, this.wheels, this.engine);
+        return new Car(
+                year,
+                Objects.requireNonNull(newColor, "Color не може бути null"),
+                wheels,
+                engine
+        );
     }
 
     public Car addWheel(Wheel newWheel) {
-        List<Wheel> newWheels = new ArrayList<>(this.wheels);
-        newWheels.add(newWheel);
-        return new Car(this.year, this.color, newWheels, this.engine);
+        Objects.requireNonNull(newWheel, "Wheel не може бути null");
+        List<Wheel> newWheels = new ArrayList<>(wheels);
+        newWheels.add(newWheel.clone());
+        return new Car(year, color, newWheels, engine);
     }
 
     @Override
@@ -60,12 +79,10 @@ public final class Car {
         if (this == o) {
             return true;
         }
-        if (o == null || getClass() != o.getClass()) {
+        if (!(o instanceof Car)) {
             return false;
         }
-
         Car car = (Car) o;
-
         return year == car.year
                 && Objects.equals(color, car.color)
                 && Objects.equals(wheels, car.wheels)
